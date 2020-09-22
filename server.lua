@@ -63,11 +63,19 @@ local function reply(server, stream)
   local req_headers = stream:get_headers()
   local req_method  = req_headers:get(':method')
 
-  local event     = req_headers:get('X-GitHub-Event')
-  local gihub_sig = req_headers:get('X-Hub-Signature')
+  local event     = req_headers:get('x-github-event')
+  local gihub_sig = nil
 
   local content   = stream:get_body_as_string()
-  local signature = sha1.hmac(secret, content)
+  local signature = 'sha1='..sha1.hmac(secret, content)
+
+  -- There is some bug here where :get won't work
+  -- for X-Hub-Signature
+  for name, value, never_index in req_headers:each() do
+    if name == 'x-hub-signature' then
+      github_sig = value
+    end
+  end
 
   local res_headers = http_headers.new()
   res_headers:append(':status', '200')
@@ -82,15 +90,15 @@ local function reply(server, stream)
   end
 
   if event ~= 'push' then
-    io.stdout.write('Invalid event recieved', '\n')
+    io.stdout:write('Invalid event recieved', '\n')
     return
   end
 
   if github_sig ~= signature then
-    io.stdout.write('Invalid signature recieved', '\n')
+    io.stdout:write('Invalid signature recieved', '\n')
     return
   end
-  
+
   mirror_repo()
 
   stream:write_chunk('Updated mirror.\n', true)
