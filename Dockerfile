@@ -1,5 +1,5 @@
 FROM alpine
-RUN apk add --no-cache build-base sudo bsd-compat-headers automake m4 openssl openssl-dev luajit lua-dev luarocks5.1
+RUN apk add --no-cache build-base sudo bsd-compat-headers automake m4 openssl openssl-dev luajit lua-dev luarocks5.1 git
 RUN sudo -H luarocks-5.1 install http
 RUN sudo -H luarocks-5.1 install sha1
 
